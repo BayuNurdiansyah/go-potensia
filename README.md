@@ -1,4 +1,4 @@
-# 🚀 Potensia Backend API
+# 🚀 Go-Potensia
 
 ![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go)
 ![Framework](https://img.shields.io/badge/Framework-Gin-blue)
@@ -7,7 +7,7 @@
 ![Auth](https://img.shields.io/badge/Auth-JWT-black)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-Potensia Backend adalah RESTful API yang digunakan sebagai server-side untuk aplikasi mobile **Potensia**.  
+Go-Potensia adalah RESTful API yang digunakan sebagai server-side untuk aplikasi mobile **Potensia**.  
 Backend ini menangani autentikasi, manajemen user, serta komunikasi data antara mobile app dan database.
 
 ---
@@ -40,8 +40,8 @@ Backend ini menangani autentikasi, manajemen user, serta komunikasi data antara 
 
 ### 1. Clone Repository
 ```
-git clone https://github.com/username/potensia-backend.git
-cd potensia-backend
+git clone https://github.com/BayuNurdiansyah/go-potensia.git
+cd go-potensia
 ```
 
 ### 2. Install Dependencies
