@@ -1,4 +1,6 @@
-# 🚀 Go-Potensia
+<h1>
+<img src="assets/potensia.png" width="30"/> Go-Potensia
+</h1>
 
 ![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go)
 ![Framework](https://img.shields.io/badge/Framework-Gin-blue)
