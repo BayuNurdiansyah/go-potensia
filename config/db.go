@@ -2,17 +2,18 @@ package config
 
 import (
 	"log"
+	"os"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func ConnectDB() {
-	dsn := "root:root@tcp(127.0.0.1:3307)/potensia?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := os.Getenv("DATABASE_URL")
 
-	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Gagal konek DB:", err)
 	}

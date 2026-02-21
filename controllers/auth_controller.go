@@ -2,14 +2,12 @@ package controllers
 
 import (
 	"net/http"
-	"time"
 
 	"go-potensia/config"
 	"go-potensia/models"
 	"go-potensia/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -77,14 +75,8 @@ func Login(c *gin.Context) {
 	}
 
 	// generate JWT
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"email":   user.Email,
-		"role":    user.Role, 
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	})
+	token, err := utils.GenerateToken(user.ID, user.Email)
 
-	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Gagal generate token",
@@ -94,7 +86,7 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login berhasil",
-		"token":   tokenString,
+		"token":   token,
 		"user": gin.H{
 			"id":    user.ID,
 			"name":  user.Name,
