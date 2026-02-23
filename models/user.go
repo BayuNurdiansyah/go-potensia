@@ -7,4 +7,8 @@ type User struct {
 	Password string `json:"password"`
 	Role     string `json:"role"`
 	Phone  string `json:"phone"`
+
+	OTP        string
+	OTPExpired int64
+	IsVerified bool
 }

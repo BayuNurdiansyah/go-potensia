@@ -10,8 +10,12 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/auth/register", controllers.Register)
-	r.POST("/auth/login", controllers.Login)
+	auth := r.Group("/auth")
+	{
+		auth.POST("/register", controllers.Register)
+		auth.POST("/login", controllers.Login)
+		auth.POST("/verify-otp", controllers.VerifyOTP) 
+	}
 
 	// protected
 	protected := r.Group("/api")
