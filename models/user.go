@@ -11,4 +11,6 @@ type User struct {
 	OTP        string
 	OTPExpired int64
 	IsVerified bool
+	LastOTPSentAt  int64
+	OTPAttempts    int
 }

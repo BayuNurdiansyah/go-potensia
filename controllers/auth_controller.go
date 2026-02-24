@@ -36,6 +36,17 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
+	now := time.Now().Unix()
+
+	if existing.ID != 0 {
+		if now-existing.LastOTPSentAt < 60 {
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"message": "Tunggu 60 detik sebelum request OTP lagi",
+				"retry_after": 45,
+			})
+			return
+		}
+	}
 
 	// hash password
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), 14)
@@ -50,10 +61,12 @@ func Register(c *gin.Context) {
 	// Generate OTP
 	otp := utils.GenerateOTP()
 
-	// 6. Set field OTP
+	// Set field OTP
 	input.OTP = otp
 	input.OTPExpired = time.Now().Add(5 * time.Minute).Unix()
 	input.IsVerified = false
+	input.LastOTPSentAt = now
+	input.OTPAttempts = 0
 
 	// simpan ke DB
 	if err := config.DB.Create(&input).Error; err != nil {
@@ -170,7 +183,17 @@ func VerifyOTP(c *gin.Context) {
 		return
 	}
 
+	if user.OTPAttempts >= 5 {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"message": "Terlalu banyak percobaan OTP, silakan request ulang",
+		})
+		return
+	}
+
 	if user.OTP != input.OTP {
+		user.OTPAttempts += 1
+		config.DB.Save(&user)
+
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"message": "OTP salah",
 		})
@@ -186,7 +209,7 @@ func VerifyOTP(c *gin.Context) {
 
 	user.IsVerified = true
 	user.OTP = ""
-	user.OTPExpired = 0
+	user.OTPAttempts = 0
 	config.DB.Save(&user)
 
 	// generate JWT to auto login
@@ -195,5 +218,65 @@ func VerifyOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Verifikasi berhasil",
 		"token":   token,
+	})
+}
+
+func ResendOTP(c *gin.Context) {
+	var input struct {
+		Email string `json:"email"`
+	}
+
+	// Bind request
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Format request tidak valid",
+		})
+		return
+	}
+
+	// Cari user
+	var user models.User
+	config.DB.Where("email = ?", input.Email).First(&user)
+
+	if user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User tidak ditemukan",
+		})
+		return
+	}
+
+	if user.IsVerified {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Akun sudah terverifikasi",
+		})
+		return
+	}
+
+	now := time.Now().Unix()
+
+	// Rate limit (60 detik)
+	if now-user.LastOTPSentAt < 60 {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"message": "Tunggu 60 detik sebelum kirim ulang OTP",
+			"retry_after": 60 - (now - user.LastOTPSentAt),
+		})
+		return
+	}
+
+	// Generate OTP baru
+	otp := utils.GenerateOTP()
+
+	// Update data user
+	user.OTP = otp
+	user.OTPExpired = time.Now().Add(5 * time.Minute).Unix()
+	user.LastOTPSentAt = now
+	user.OTPAttempts = 0
+
+	config.DB.Save(&user)
+
+	go utils.SendOTPEmail(user.Email, otp)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "OTP berhasil dikirim ulang",
 	})
 }

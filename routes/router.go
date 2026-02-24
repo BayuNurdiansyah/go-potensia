@@ -14,7 +14,8 @@ func SetupRouter() *gin.Engine {
 	{
 		auth.POST("/register", controllers.Register)
 		auth.POST("/login", controllers.Login)
-		auth.POST("/verify-otp", controllers.VerifyOTP) 
+		auth.POST("/verify-otp", controllers.VerifyOTP)
+		auth.POST("/resend-otp", controllers.ResendOTP) 
 	}
 
 	// protected
