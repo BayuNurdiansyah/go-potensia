@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"time"
+	"fmt"
 
 	"go-potensia/config"
 	"go-potensia/models"
@@ -77,7 +78,12 @@ func Register(c *gin.Context) {
 	}
 
 	// send email (async using goroutines)
-	go utils.SendOTPEmail(input.Email, otp)
+	go func() {
+		err := utils.SendOTPEmail(input.Email, input.Name, otp)
+			if err != nil {
+				fmt.Println("Gagal kirim email:", err)
+			}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Register berhasil, cek email untuk OTP",
@@ -266,7 +272,12 @@ func ResendOTP(c *gin.Context) {
 
 	config.DB.Save(&user)
 
-	go utils.SendOTPEmail(user.Email, otp)
+	go func() {
+		err := utils.SendOTPEmail(user.Email, user.Name, otp)
+		if err != nil {
+			fmt.Println("Gagal kirim email:", err)
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "OTP berhasil dikirim ulang",

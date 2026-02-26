@@ -1,58 +1,69 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"net/smtp"
+	"net/http"
 	"os"
 )
 
-func SendOTPEmail(to string, otp string) error {
-	from := os.Getenv("SMTP_EMAIL")
-	password := os.Getenv("SMTP_PASSWORD")
-	host := os.Getenv("SMTP_HOST")
-	port := os.Getenv("SMTP_PORT")
+func SendOTPEmail(toEmail string, name string, otp string) error {
+	apiKey := os.Getenv("BREVO_API_KEY")
 
-	auth := smtp.PlainAuth("", from, password, host)
+	url := "https://api.brevo.com/v3/smtp/email"
 
-	html := `
+	htmlContent := fmt.Sprintf(`
 	<div style="font-family: Arial; background:#f4f6f8; padding:20px;">
-		<div style="max-width:500px; margin:auto; background:white; padding:20px; border-radius:10px;">
-			<h2 style="color:#4F46E5;">Potensia 🎓</h2>
-			<p>Halo,</p>
+		<div style="max-width:600px;margin:auto;background:white;border-radius:10px;padding:30px;">
+			<h2 style="color:#4f46e5;">Potensia</h2>
+			<p>Halo %s 👋</p>
 			<p>Gunakan kode OTP berikut untuk verifikasi akun kamu:</p>
 			
-			<div style="text-align:center; margin:20px 0;">
-				<span style="font-size:28px; letter-spacing:5px; font-weight:bold; color:#111;">
-					` + otp + `
-				</span>
+			<div style="text-align:center;margin:30px 0;">
+				<span style="font-size:32px;font-weight:bold;color:#111;">%s</span>
 			</div>
 
-			<p>Kode ini berlaku selama <b>5 menit</b>.</p>
+			<p style="color:#555;">Kode ini berlaku selama 5 menit.</p>
 
-			<hr/>
-			<small>Potensia</small>
+			<hr>
+			<p style="font-size:12px;color:#999;">
+				Potensia - Platform Edukasi Skill 🚀
+			</p>
 		</div>
 	</div>
-	`
+	`, name, otp)
 
-	msg := "MIME-version: 1.0;\r\n" +
-		"Content-Type: text/html; charset=\"UTF-8\";\r\n" +
-		"Subject: Kode OTP Potensia\r\n\r\n" +
-		html
-
-	err := smtp.SendMail(
-		host+":"+port,
-		auth,
-		from,
-		[]string{to},
-		[]byte(msg),
-	)
-
-	if err != nil {
-		fmt.Println("Error kirim email:", err)
-		return err
+	payload := map[string]interface{}{
+		"sender": map[string]string{
+			"name":  "Potensia",
+			"email": "bayuhaft118@gmail.com",
+		},
+		"to": []map[string]string{
+			{"email": toEmail, "name": name},
+		},
+		"subject":     "Kode OTP Verifikasi Akun",
+		"htmlContent": htmlContent,
 	}
 
-	fmt.Println("OTP berhasil dikirim ke:", to)
+	jsonData, _ := json.Marshal(payload)
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("api-key", apiKey)
+	req.Header.Set("content-type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("gagal kirim email, status: %d", resp.StatusCode)
+	}
+
 	return nil
 }
