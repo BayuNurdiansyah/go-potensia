@@ -123,14 +123,6 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// validasi role
-	if user.Role != input.Role {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Role tidak sesuai, harap ganti role",
-		})
-		return
-	}
-
 	// generate JWT
 	token, err := utils.GenerateToken(user.ID, user.Email)
 

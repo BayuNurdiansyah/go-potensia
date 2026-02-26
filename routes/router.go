@@ -22,9 +22,7 @@ func SetupRouter() *gin.Engine {
 	protected := r.Group("/api")
 	protected.Use(middlewares.AuthMiddleware())
 	{
-		protected.GET("/profile", func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "Ini data rahasia 😎"})
-		})
+		protected.GET("/profile", controllers.Profile)
 	}
 	return r
 }
