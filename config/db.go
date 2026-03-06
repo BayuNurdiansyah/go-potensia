@@ -23,11 +23,29 @@ func ConnectDB() {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect database: %v", err)
 	}
 
-	// Auto-migrate models
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	err = db.AutoMigrate(
+		&models.User{},
+		&models.MentorProfile{},
+		&models.MentorCertificate{},
+		&models.MentorAchievement{},
+		&models.MentorGallery{},
+		&models.MentorEducation{},
+		&models.ParentProfile{},
+		&models.Child{},
+		&models.Course{},
+		&models.CourseCompetency{},
+		&models.CoursePackage{},
+		&models.Order{},
+		&models.Session{},
+		&models.Invoice{},
+		&models.Review{},
+		&models.Notification{},
+		&models.SkillProgress{},
+	)
+	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
