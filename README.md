@@ -86,7 +86,7 @@ API yang membutuhkan login menggunakan **Bearer Token** di header:
 Authorization: Bearer <token>
 ```
 
-Token didapat dari response `POST /api/v1/auth/login` atau `POST /api/v1/auth/verify-otp`.
+Token didapat dari response `POST /api/auth/login` atau `POST /api/auth/verify-otp`.
 
 Token berlaku **24 jam**.
 
@@ -159,11 +159,11 @@ Cek apakah server berjalan.
 
 ### Auth
 
-Base path: `/api/v1/auth`
+Base path: `/api/auth`
 
 ---
 
-#### `POST /api/v1/auth/register`
+#### `POST /api/auth/register`
 
 Daftar akun baru. Setelah berhasil, kode OTP 6 digit dikirim ke email untuk verifikasi.
 
@@ -213,7 +213,7 @@ Daftar akun baru. Setelah berhasil, kode OTP 6 digit dikirim ke email untuk veri
 
 ---
 
-#### `POST /api/v1/auth/verify-otp`
+#### `POST /api/auth/verify-otp`
 
 Verifikasi kode OTP yang dikirim ke email saat register. Jika berhasil, langsung mendapat JWT token (auto-login).
 
@@ -273,7 +273,7 @@ Verifikasi kode OTP yang dikirim ke email saat register. Jika berhasil, langsung
 
 ---
 
-#### `POST /api/v1/auth/resend-otp`
+#### `POST /api/auth/resend-otp`
 
 Kirim ulang kode OTP ke email. Hanya bisa dilakukan tiap 60 detik.
 
@@ -305,7 +305,7 @@ Kirim ulang kode OTP ke email. Hanya bisa dilakukan tiap 60 detik.
 
 ---
 
-#### `POST /api/v1/auth/login`
+#### `POST /api/auth/login`
 
 Login dengan email dan password.
 
@@ -351,7 +351,7 @@ Login dengan email dan password.
 
 ---
 
-#### `POST /api/v1/auth/forgot-password`
+#### `POST /api/auth/forgot-password`
 
 Request link reset password. Link dikirim ke email, berlaku **15 menit** dan hanya bisa digunakan **sekali**.
 
@@ -375,7 +375,7 @@ Request link reset password. Link dikirim ke email, berlaku **15 menit** dan han
 
 ---
 
-#### `GET /api/v1/auth/verify-reset-token`
+#### `GET /api/auth/verify-reset-token`
 
 Validasi token reset password sebelum menampilkan form reset di frontend.
 
@@ -387,7 +387,7 @@ Validasi token reset password sebelum menampilkan form reset di frontend.
 |---------|-------|---------------------------|
 | `token` | ✅    | Token dari link di email  |
 
-**Contoh:** `GET /api/v1/auth/verify-reset-token?token=abc123...`
+**Contoh:** `GET /api/auth/verify-reset-token?token=abc123...`
 
 **Response `200`:**
 ```json
@@ -406,7 +406,7 @@ Validasi token reset password sebelum menampilkan form reset di frontend.
 
 ---
 
-#### `POST /api/v1/auth/reset-password`
+#### `POST /api/auth/reset-password`
 
 Set password baru menggunakan token dari email.
 
@@ -436,7 +436,7 @@ Set password baru menggunakan token dari email.
 
 ---
 
-#### `POST /api/v1/auth/change-password`
+#### `POST /api/auth/change-password`
 
 Ubah password untuk akun yang sedang login.
 
@@ -467,7 +467,7 @@ Ubah password untuk akun yang sedang login.
 
 ---
 
-#### `POST /api/v1/auth/delete-account`
+#### `POST /api/auth/delete-account`
 
 Hapus akun (soft delete — akun dinonaktifkan, bukan dihapus permanen).
 
@@ -493,7 +493,7 @@ Hapus akun (soft delete — akun dinonaktifkan, bukan dihapus permanen).
 
 ---
 
-#### `GET /api/v1/mentors`
+#### `GET /api/mentors`
 
 Cari dan filter mentor yang tersedia.
 
@@ -511,7 +511,7 @@ Cari dan filter mentor yang tersedia.
 | `page`     | ❌    | Halaman (default: `1`)                            |
 | `limit`    | ❌    | Jumlah per halaman (default: `20`, maks: `100`)   |
 
-**Contoh:** `GET /api/v1/mentors?province=JAWA BARAT&category=MATEMATIKA&page=1&limit=10`
+**Contoh:** `GET /api/mentors?province=JAWA BARAT&category=MATEMATIKA&page=1&limit=10`
 
 **Response `200`:**
 ```json
@@ -543,7 +543,7 @@ Cari dan filter mentor yang tersedia.
 
 ---
 
-#### `GET /api/v1/mentors/:mentor_id`
+#### `GET /api/mentors/:mentor_id`
 
 Lihat profil publik lengkap seorang mentor beserta kursus dan ulasan terbaru.
 
@@ -551,7 +551,7 @@ Lihat profil publik lengkap seorang mentor beserta kursus dan ulasan terbaru.
 
 **Path Param:** `mentor_id` — ID mentor profile
 
-**Contoh:** `GET /api/v1/mentors/1`
+**Contoh:** `GET /api/mentors/1`
 
 **Response `200`:**
 ```json
@@ -611,7 +611,7 @@ Lihat profil publik lengkap seorang mentor beserta kursus dan ulasan terbaru.
 
 ---
 
-#### `GET /api/v1/notifications`
+#### `GET /api/notifications`
 
 Ambil daftar notifikasi user yang sedang login (maks 50 terbaru).
 
@@ -641,15 +641,15 @@ Ambil daftar notifikasi user yang sedang login (maks 50 terbaru).
 
 ---
 
-#### `PUT /api/v1/notifications/:notif_id/read`
+#### `PUT /api/notifications/:notif_id/read`
 
 Tandai satu notifikasi sebagai sudah dibaca. Gunakan `all` sebagai `notif_id` untuk tandai semua.
 
 **Auth:** ✅ Bearer Token (semua role)
 
-**Contoh satu notif:** `PUT /api/v1/notifications/1/read`
+**Contoh satu notif:** `PUT /api/notifications/1/read`
 
-**Contoh semua:** `PUT /api/v1/notifications/all/read`
+**Contoh semua:** `PUT /api/notifications/all/read`
 
 **Request Body:** Tidak ada
 
@@ -662,7 +662,7 @@ Tandai satu notifikasi sebagai sudah dibaca. Gunakan `all` sebagai `notif_id` un
 
 ---
 
-#### `GET /api/v1/notifications/preferences`
+#### `GET /api/notifications/preferences`
 
 Ambil preferensi notifikasi user.
 
@@ -680,7 +680,7 @@ Ambil preferensi notifikasi user.
 
 ---
 
-#### `PUT /api/v1/notifications/preferences`
+#### `PUT /api/notifications/preferences`
 
 Update preferensi notifikasi user.
 
@@ -707,13 +707,13 @@ Update preferensi notifikasi user.
 
 ### Mentor
 
-Base path: `/api/v1/mentor`
+Base path: `/api/mentor`
 
 **Auth:** ✅ Bearer Token dengan role `mentor`
 
 ---
 
-#### `GET /api/v1/mentor/dashboard`
+#### `GET /api/mentor/dashboard`
 
 Ambil data dashboard mentor: statistik, jadwal hari ini, dan siswa aktif.
 
@@ -757,7 +757,7 @@ Ambil data dashboard mentor: statistik, jadwal hari ini, dan siswa aktif.
 
 ---
 
-#### `GET /api/v1/mentor/profile`
+#### `GET /api/mentor/profile`
 
 Ambil profil lengkap mentor yang sedang login.
 
@@ -794,7 +794,7 @@ Ambil profil lengkap mentor yang sedang login.
 
 ---
 
-#### `PUT /api/v1/mentor/profile`
+#### `PUT /api/mentor/profile`
 
 Update profil mentor. Semua field opsional — hanya field yang dikirim yang akan diupdate.
 
@@ -824,7 +824,7 @@ Update profil mentor. Semua field opsional — hanya field yang dikirim yang aka
 
 ---
 
-#### `GET /api/v1/mentor/students`
+#### `GET /api/mentor/students`
 
 Ambil daftar siswa (berdasarkan order aktif mentor ini).
 
@@ -860,7 +860,7 @@ Ambil daftar siswa (berdasarkan order aktif mentor ini).
 
 ---
 
-#### `GET /api/v1/mentor/students/:order_id`
+#### `GET /api/mentor/students/:order_id`
 
 Lihat detail siswa tertentu berdasarkan order: data anak, sesi, dan skill progress.
 
@@ -892,7 +892,7 @@ Lihat detail siswa tertentu berdasarkan order: data anak, sesi, dan skill progre
 
 ---
 
-#### `GET /api/v1/mentor/schedule`
+#### `GET /api/mentor/schedule`
 
 Ambil jadwal sesi mengajar mentor.
 
@@ -902,7 +902,7 @@ Ambil jadwal sesi mengajar mentor.
 |--------|-------|--------------------------------------------------------------------|
 | `date` | ❌    | Filter tanggal format `YYYY-MM-DD`. Jika kosong, tampilkan 7 hari ke depan. |
 
-**Contoh:** `GET /api/v1/mentor/schedule?date=2025-01-20`
+**Contoh:** `GET /api/mentor/schedule?date=2025-01-20`
 
 **Response `200`:**
 ```json
@@ -930,7 +930,7 @@ Ambil jadwal sesi mengajar mentor.
 
 ---
 
-#### `PUT /api/v1/mentor/sessions/:session_id`
+#### `PUT /api/mentor/sessions/:session_id`
 
 Update data sesi: topik, catatan, bintang siswa, atau status sesi.
 
@@ -965,7 +965,7 @@ Update data sesi: topik, catatan, bintang siswa, atau status sesi.
 
 ---
 
-#### `GET /api/v1/mentor/courses`
+#### `GET /api/mentor/courses`
 
 Ambil semua kursus milik mentor yang sedang login.
 
@@ -994,7 +994,7 @@ Ambil semua kursus milik mentor yang sedang login.
 
 ---
 
-#### `POST /api/v1/mentor/courses`
+#### `POST /api/mentor/courses`
 
 Buat kursus baru.
 
@@ -1050,7 +1050,7 @@ Buat kursus baru.
 
 ---
 
-#### `GET /api/v1/mentor/courses/:course_id`
+#### `GET /api/mentor/courses/:course_id`
 
 Lihat detail satu kursus milik mentor beserta sertifikat, prestasi, dan galeri.
 
@@ -1076,7 +1076,7 @@ Lihat detail satu kursus milik mentor beserta sertifikat, prestasi, dan galeri.
 
 ---
 
-#### `PUT /api/v1/mentor/courses/:course_id`
+#### `PUT /api/mentor/courses/:course_id`
 
 Update data kursus. Semua field opsional.
 
@@ -1108,7 +1108,7 @@ Update data kursus. Semua field opsional.
 
 ---
 
-#### `DELETE /api/v1/mentor/courses/:course_id`
+#### `DELETE /api/mentor/courses/:course_id`
 
 Hapus kursus. Tidak bisa dihapus jika masih ada order aktif atau pending.
 
@@ -1130,7 +1130,7 @@ Hapus kursus. Tidak bisa dihapus jika masih ada order aktif atau pending.
 
 ---
 
-#### `GET /api/v1/mentor/reviews`
+#### `GET /api/mentor/reviews`
 
 Ambil semua ulasan yang masuk untuk mentor ini.
 
@@ -1164,13 +1164,13 @@ Ambil semua ulasan yang masuk untuk mentor ini.
 
 ### Parent
 
-Base path: `/api/v1/parent`
+Base path: `/api/parent`
 
 **Auth:** ✅ Bearer Token dengan role `parent`
 
 ---
 
-#### `GET /api/v1/parent/dashboard`
+#### `GET /api/parent/dashboard`
 
 Ambil data dashboard orang tua: daftar anak dengan jadwal terdekat, statistik, dan tagihan mendatang.
 
@@ -1216,7 +1216,7 @@ Ambil data dashboard orang tua: daftar anak dengan jadwal terdekat, statistik, d
 
 ---
 
-#### `GET /api/v1/parent/profile`
+#### `GET /api/parent/profile`
 
 Ambil profil orang tua beserta daftar anak.
 
@@ -1237,7 +1237,7 @@ Ambil profil orang tua beserta daftar anak.
 
 ---
 
-#### `PUT /api/v1/parent/profile`
+#### `PUT /api/parent/profile`
 
 Update profil orang tua. Semua field opsional.
 
@@ -1259,7 +1259,7 @@ Update profil orang tua. Semua field opsional.
 
 ---
 
-#### `GET /api/v1/parent/children`
+#### `GET /api/parent/children`
 
 Ambil daftar semua anak milik orang tua ini.
 
@@ -1283,7 +1283,7 @@ Ambil daftar semua anak milik orang tua ini.
 
 ---
 
-#### `POST /api/v1/parent/children`
+#### `POST /api/parent/children`
 
 Tambah data anak baru.
 
@@ -1321,7 +1321,7 @@ Tambah data anak baru.
 
 ---
 
-#### `PUT /api/v1/parent/children/:child_id`
+#### `PUT /api/parent/children/:child_id`
 
 Update data anak. Semua field opsional.
 
@@ -1347,7 +1347,7 @@ Update data anak. Semua field opsional.
 
 ---
 
-#### `DELETE /api/v1/parent/children/:child_id`
+#### `DELETE /api/parent/children/:child_id`
 
 Hapus data anak. Tidak bisa dihapus jika masih ada kursus aktif.
 
@@ -1369,7 +1369,7 @@ Hapus data anak. Tidak bisa dihapus jika masih ada kursus aktif.
 
 ---
 
-#### `GET /api/v1/parent/children/:child_id/progress`
+#### `GET /api/parent/children/:child_id/progress`
 
 Lihat progress belajar anak: semua order aktif, skill progress, dan sesi terbaru.
 
@@ -1415,7 +1415,7 @@ Lihat progress belajar anak: semua order aktif, skill progress, dan sesi terbaru
 
 ---
 
-#### `GET /api/v1/parent/orders`
+#### `GET /api/parent/orders`
 
 Ambil riwayat semua order orang tua ini.
 
@@ -1444,7 +1444,7 @@ Ambil riwayat semua order orang tua ini.
 
 ---
 
-#### `POST /api/v1/parent/orders`
+#### `POST /api/parent/orders`
 
 Beli paket kursus untuk anak. Setelah order dibuat, invoice otomatis dibuat dengan due date 3 hari.
 
@@ -1480,7 +1480,7 @@ Beli paket kursus untuk anak. Setelah order dibuat, invoice otomatis dibuat deng
 
 ---
 
-#### `GET /api/v1/parent/payments`
+#### `GET /api/parent/payments`
 
 Ambil semua invoice/tagihan orang tua ini.
 
@@ -1513,7 +1513,7 @@ Ambil semua invoice/tagihan orang tua ini.
 
 ---
 
-#### `POST /api/v1/parent/payments/:invoice_id`
+#### `POST /api/parent/payments/:invoice_id`
 
 Konfirmasi pembayaran untuk invoice tertentu.
 
@@ -1550,7 +1550,7 @@ Konfirmasi pembayaran untuk invoice tertentu.
 
 ---
 
-#### `GET /api/v1/parent/schedule`
+#### `GET /api/parent/schedule`
 
 Ambil jadwal sesi mendatang untuk semua anak.
 
@@ -1578,7 +1578,7 @@ Ambil jadwal sesi mendatang untuk semua anak.
 
 ---
 
-#### `POST /api/v1/parent/reviews`
+#### `POST /api/parent/reviews`
 
 Kirim ulasan untuk sebuah order. Satu order hanya bisa diulas **satu kali**.
 
@@ -1625,7 +1625,7 @@ Kirim ulasan untuk sebuah order. Satu order hanya bisa diulas **satu kali**.
 
 ---
 
-#### `GET /api/v1/parent/reviews`
+#### `GET /api/parent/reviews`
 
 Ambil semua ulasan yang pernah dikirim orang tua ini.
 
