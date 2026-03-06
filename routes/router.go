@@ -15,7 +15,7 @@ func SetupRouter() *gin.Engine {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	api := r.Group("/api/v1")
+	api := r.Group("/api")
 
 	// ── Auth (public) ────────────────────────────────────────────────────────
 	auth := api.Group("/auth")
@@ -35,7 +35,7 @@ func SetupRouter() *gin.Engine {
 	protected := api.Group("/")
 	protected.Use(middlewares.AuthMiddleware())
 	{
-		protected.GET("/profile", controllers.GetProfile)
+		// protected.GET("/profile", controllers.GetProfile)
 	}
 
 	return r
