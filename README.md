@@ -1,6 +1,6 @@
 # Go Potensia — Backend API
 
-Backend untuk aplikasi bimbel **Potensia**, dibangun dengan Go + Gin + GORM + PostgreSQL.
+Backend lengkap untuk aplikasi bimbel **Potensia** (Golang + Gin + GORM + PostgreSQL).
 
 ---
 
@@ -8,125 +8,166 @@ Backend untuk aplikasi bimbel **Potensia**, dibangun dengan Go + Gin + GORM + Po
 
 ```
 go-potensia/
-├── config/           # Koneksi database
-├── controllers/      # Handler request (auth, profile)
-├── middlewares/      # JWT auth middleware
-├── models/           # GORM models
-├── routes/           # Setup routing
-├── utils/            # JWT, OTP, Email, Validator
+├── config/
+│   └── database.go         # Koneksi & auto-migrate
+├── controllers/
+│   ├── auth.go             # Register, Login, OTP, ForgotPassword, dll
+│   ├── mentor.go           # Dashboard, profile, students, schedule, reviews
+│   ├── course.go           # CRUD kursus & search mentor publik
+│   ├── parent.go           # Dashboard, children, orders, payments, progress
+│   └── notification.go     # Notifikasi in-app
+├── middlewares/
+│   └── auth.go             # JWT auth + role guard
+├── models/
+│   └── models.go           # Semua struct GORM
+├── routes/
+│   └── routes.go           # Routing lengkap
+├── utils/
+│   ├── jwt.go
+│   ├── otp.go
+│   ├── email.go            # Brevo API
+│   ├── validator.go
+│   └── response.go         # Helper response standar
 ├── main.go
-├── .env.example
-└── go.mod
+└── .env.example
 ```
+
+---
+
+## 📊 Skema Database (17 Tabel)
+
+| Tabel                  | Fungsi                                                    |
+|------------------------|-----------------------------------------------------------|
+| `users`                | Akun login (mentor / parent / admin)                      |
+| `mentor_profiles`      | Data lengkap mentor (1:1 dengan users)                    |
+| `mentor_certificates`  | Sertifikat mentor                                         |
+| `mentor_achievements`  | Prestasi mentor                                           |
+| `mentor_galleries`     | Foto galeri mentor                                        |
+| `mentor_educations`    | Riwayat pendidikan mentor                                 |
+| `parent_profiles`      | Data tambahan orang tua (1:1 dengan users)                |
+| `children`             | Data anak dari parent                                     |
+| `courses`              | Kursus yang dibuat mentor                                 |
+| `course_competencies`  | Kompetensi/materi per kursus                              |
+| `course_packages`      | Paket harga (Starter/Reguler/Intensif)                    |
+| `orders`               | Transaksi pembelian paket kursus                          |
+| `sessions`             | Satu pertemuan belajar                                    |
+| `invoices`             | Tagihan pembayaran per order                              |
+| `reviews`              | Ulasan parent terhadap mentor/kursus                      |
+| `notifications`        | Notifikasi in-app                                         |
+| `skill_progresses`     | Progress per skill per anak per kursus                    |
 
 ---
 
 ## ⚙️ Setup
 
-1. Copy `.env.example` ke `.env` dan isi nilainya:
 ```bash
 cp .env.example .env
-```
+# isi .env dengan konfigurasi kamu
 
-2. Install dependencies:
-```bash
 go mod tidy
-```
-
-3. Run server:
-```bash
 go run main.go
 ```
 
 ---
 
-## 📬 Environment Variables
+## 🔌 API Endpoints Lengkap
 
-| Variable             | Keterangan                                      |
-|----------------------|-------------------------------------------------|
-| `DATABASE_URL`       | PostgreSQL connection string                    |
-| `JWT_SECRET`         | Secret key untuk JWT (min 32 karakter)          |
-| `PORT`               | Port server (default: 8080)                     |
-| `APP_NAME`           | Nama aplikasi (tampil di email)                 |
-| `APP_URL`            | Base URL frontend (untuk link reset password)   |
-| `BREVO_API_KEY`      | API key dari [Brevo](https://brevo.com)         |
-| `BREVO_SENDER_EMAIL` | Email pengirim yang terverifikasi di Brevo      |
-| `BREVO_SENDER_NAME`  | Nama pengirim (default: APP_NAME)               |
+### Auth (Public)
+| Method | Endpoint                              | Keterangan                      |
+|--------|---------------------------------------|---------------------------------|
+| POST   | `/api/auth/register`               | Daftar akun (mentor/parent)     |
+| POST   | `/api/auth/login`                  | Login                           |
+| POST   | `/api/auth/verify-otp`             | Verifikasi OTP register         |
+| POST   | `/api/auth/resend-otp`             | Kirim ulang OTP                 |
+| POST   | `/api/auth/forgot-password`        | Request link reset password     |
+| GET    | `/api/auth/verify-reset-token`     | Validasi token reset            |
+| POST   | `/api/auth/reset-password`         | Set password baru               |
+
+### Public
+| Method | Endpoint                              | Keterangan                      |
+|--------|---------------------------------------|---------------------------------|
+| GET    | `/api/mentors`                     | Cari mentor (filter + search)   |
+| GET    | `/api/mentors/:mentor_id`          | Detail profil publik mentor     |
+
+### Protected (All Roles) — Bearer Token required
+| Method | Endpoint                              | Keterangan                      |
+|--------|---------------------------------------|---------------------------------|
+| POST   | `/api/auth/change-password`        | Ubah password                   |
+| POST   | `/api/auth/delete-account`         | Hapus akun                      |
+| GET    | `/api/notifications`               | Daftar notifikasi               |
+| PUT    | `/api/notifications/:id/read`      | Tandai dibaca (`all` = semua)   |
+| GET    | `/api/notifications/preferences`   | Preferensi notifikasi           |
+| PUT    | `/api/notifications/preferences`   | Update preferensi notifikasi    |
+
+### Mentor — Role: mentor
+| Method | Endpoint                              | Keterangan                      |
+|--------|---------------------------------------|---------------------------------|
+| GET    | `/api/mentor/dashboard`            | Dashboard statistik             |
+| GET    | `/api/mentor/profile`              | Profil mentor                   |
+| PUT    | `/api/mentor/profile`              | Update profil mentor            |
+| GET    | `/api/mentor/students`             | Daftar siswa                    |
+| GET    | `/api/mentor/students/:order_id`   | Detail siswa + progress + sesi  |
+| GET    | `/api/mentor/schedule`             | Jadwal mengajar                 |
+| PUT    | `/api/mentor/sessions/:id`         | Update sesi (topik/catatan/bintang/status) |
+| GET    | `/api/mentor/courses`              | Daftar kursus                   |
+| POST   | `/api/mentor/courses`              | Buat kursus baru                |
+| GET    | `/api/mentor/courses/:id`          | Detail kursus                   |
+| PUT    | `/api/mentor/courses/:id`          | Update kursus                   |
+| DELETE | `/api/mentor/courses/:id`          | Hapus kursus                    |
+| GET    | `/api/mentor/reviews`              | Ulasan masuk                    |
+
+### Parent — Role: parent
+| Method | Endpoint                                    | Keterangan                    |
+|--------|---------------------------------------------|-------------------------------|
+| GET    | `/api/parent/dashboard`                  | Dashboard                     |
+| GET    | `/api/parent/profile`                    | Profil orang tua              |
+| PUT    | `/api/parent/profile`                    | Update profil                 |
+| GET    | `/api/parent/children`                   | Daftar anak                   |
+| POST   | `/api/parent/children`                   | Tambah anak                   |
+| PUT    | `/api/parent/children/:id`               | Update data anak              |
+| DELETE | `/api/parent/children/:id`               | Hapus data anak               |
+| GET    | `/api/parent/children/:id/progress`      | Progress belajar anak         |
+| GET    | `/api/parent/orders`                     | Daftar order                  |
+| POST   | `/api/parent/orders`                     | Beli paket kursus             |
+| GET    | `/api/parent/payments`                   | Daftar invoice/tagihan        |
+| POST   | `/api/parent/payments/:invoice_id`       | Konfirmasi pembayaran         |
+| GET    | `/api/parent/schedule`                   | Jadwal sesi anak              |
+| POST   | `/api/parent/reviews`                    | Kirim ulasan                  |
+| GET    | `/api/parent/reviews`                    | Riwayat ulasan                |
 
 ---
 
-## 🔌 API Endpoints
-
-### Auth
-
-| Method | Endpoint                          | Auth | Keterangan                            |
-|--------|-----------------------------------|------|---------------------------------------|
-| POST   | `/api/v1/auth/register`           | ❌   | Daftar akun baru                      |
-| POST   | `/api/v1/auth/login`              | ❌   | Login                                 |
-| POST   | `/api/v1/auth/verify-otp`         | ❌   | Verifikasi OTP setelah register       |
-| POST   | `/api/v1/auth/resend-otp`         | ❌   | Kirim ulang OTP                       |
-| POST   | `/api/v1/auth/forgot-password`    | ❌   | Request link reset password via email |
-| GET    | `/api/v1/auth/verify-reset-token` | ❌   | Validasi token reset (untuk frontend) |
-| POST   | `/api/v1/auth/reset-password`     | ❌   | Set password baru                     |
-
-### Protected
-
-| Method | Endpoint            | Auth | Keterangan           |
-|--------|---------------------|------|----------------------|
-| GET    | `/api/v1/profile`   | ✅   | Lihat profil sendiri |
-
----
-
-## 🔐 Forgot Password Flow
+## 🔐 Auth Flow
 
 ```
-1. POST /auth/forgot-password     { "email": "user@example.com" }
-      → Server kirim email dengan link: APP_URL/reset-password?token=<token>
-      → Token berlaku 15 menit, sekali pakai
+Register → OTP (email) → Verify OTP → auto Login (JWT)
 
-2. GET /auth/verify-reset-token?token=<token>
-      → Frontend panggil ini untuk validasi token sebelum tampilkan form
-
-3. POST /auth/reset-password      { "token": "...", "new_password": "...", "confirm_password": "..." }
-      → Password diupdate, token di-invalidate
+Forgot Password:
+  POST /forgot-password { email }
+  → email: APP_URL/reset-password?token=<token> (15 menit, sekali pakai)
+  GET  /verify-reset-token?token=<token>
+  POST /reset-password { token, new_password, confirm_password }
 ```
 
 ---
 
-## 🧪 Contoh Request
+## 📋 Query Params
 
-### Register
-```json
-POST /api/v1/auth/register
-{
-  "name": "Budi Santoso",
-  "email": "budi@example.com",
-  "password": "budi1234",
-  "role": "student"
-}
-```
+**GET /api/mentors**
+- `province` — filter provinsi
+- `regency` — filter kabupaten/kota
+- `district` — filter kecamatan
+- `category` — filter kategori kursus (MATEMATIKA, dll)
+- `search` — cari nama mentor
+- `page` (default: 1)
+- `limit` (default: 20)
 
-### Login
-```json
-POST /api/v1/auth/login
-{
-  "email": "budi@example.com",
-  "password": "budi1234"
-}
-```
+**GET /api/mentor/students**
+- `status` — `active` | `completed`
+- `search` — nama anak / kursus
 
-### Forgot Password
-```json
-POST /api/v1/auth/forgot-password
-{ "email": "budi@example.com" }
-```
+**GET /api/mentor/schedule**
+- `date` — filter tanggal (`YYYY-MM-DD`)
 
-### Reset Password
-```json
-POST /api/v1/auth/reset-password
-{
-  "token": "abc123...",
-  "new_password": "newpass99",
-  "confirm_password": "newpass99"
-}
-```
+**GET /api/mentor/reviews**
+- `course_id` — filter per kursus
