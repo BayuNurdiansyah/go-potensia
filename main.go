@@ -5,22 +5,19 @@ import (
 	"os"
 
 	"go-potensia/config"
-	"go-potensia/models"
 	"go-potensia/routes"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Gagal load .env")
-	} 
+	// Load .env (ignore error in production — env vars set via system)
+	_ = godotenv.Load()
+
+	// Connect DB
 	config.ConnectDB()
 
-	// auto create table
-	config.DB.AutoMigrate(&models.User{})
-
+	// Setup router
 	r := routes.SetupRouter()
 
 	port := os.Getenv("PORT")
@@ -28,5 +25,8 @@ func main() {
 		port = "10000"
 	}
 
-	r.Run(":" + port)
+	log.Printf("🚀 Server running on port %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

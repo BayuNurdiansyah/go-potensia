@@ -1,107 +1,132 @@
-<h1>
-<img src="assets/potensia.png" width="30"/> Go-Potensia
-</h1>
+# Go Potensia — Backend API
 
-![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go)
-![Framework](https://img.shields.io/badge/Framework-Gin-blue)
-![ORM](https://img.shields.io/badge/ORM-GORM-green)
-![Database](https://img.shields.io/badge/Database-MySQL-orange?logo=mysql)
-![Auth](https://img.shields.io/badge/Auth-JWT-black)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-
-Go-Potensia adalah RESTful API yang digunakan sebagai server-side untuk aplikasi mobile **Potensia**.  
-Backend ini menangani autentikasi, manajemen user, serta komunikasi data antara mobile app dan database.
+Backend untuk aplikasi bimbel **Potensia**, dibangun dengan Go + Gin + GORM + PostgreSQL.
 
 ---
 
-## 🛠️ Tech Stack
-
-- Golang (Go)
-- Gin Gonic
-- GORM
-- MySQL
-- JWT (JSON Web Token)
-
----
-
-## 📂 Project Structure
+## 🗂️ Struktur Project
 
 ```
-├── controllers
-├── models
-├── routes
-├── middleware
-├── config
-├── utils
-└── main.go
+go-potensia/
+├── config/           # Koneksi database
+├── controllers/      # Handler request (auth, profile)
+├── middlewares/      # JWT auth middleware
+├── models/           # GORM models
+├── routes/           # Setup routing
+├── utils/            # JWT, OTP, Email, Validator
+├── main.go
+├── .env.example
+└── go.mod
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Setup
 
-### 1. Clone Repository
-```
-git clone https://github.com/BayuNurdiansyah/go-potensia.git
-cd go-potensia
+1. Copy `.env.example` ke `.env` dan isi nilainya:
+```bash
+cp .env.example .env
 ```
 
-### 2. Install Dependencies
-```
+2. Install dependencies:
+```bash
 go mod tidy
 ```
 
-### 3. Setup Environment
-Create `.env` file:
-```
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASS=
-DB_NAME=potensia
-
-JWT_SECRET=your_secret_key
-```
-
-### 4. Run Server
-```
+3. Run server:
+```bash
 go run main.go
 ```
 
-Server runs at:
+---
+
+## 📬 Environment Variables
+
+| Variable             | Keterangan                                      |
+|----------------------|-------------------------------------------------|
+| `DATABASE_URL`       | PostgreSQL connection string                    |
+| `JWT_SECRET`         | Secret key untuk JWT (min 32 karakter)          |
+| `PORT`               | Port server (default: 8080)                     |
+| `APP_NAME`           | Nama aplikasi (tampil di email)                 |
+| `APP_URL`            | Base URL frontend (untuk link reset password)   |
+| `BREVO_API_KEY`      | API key dari [Brevo](https://brevo.com)         |
+| `BREVO_SENDER_EMAIL` | Email pengirim yang terverifikasi di Brevo      |
+| `BREVO_SENDER_NAME`  | Nama pengirim (default: APP_NAME)               |
+
+---
+
+## 🔌 API Endpoints
+
+### Auth
+
+| Method | Endpoint                          | Auth | Keterangan                            |
+|--------|-----------------------------------|------|---------------------------------------|
+| POST   | `/api/v1/auth/register`           | ❌   | Daftar akun baru                      |
+| POST   | `/api/v1/auth/login`              | ❌   | Login                                 |
+| POST   | `/api/v1/auth/verify-otp`         | ❌   | Verifikasi OTP setelah register       |
+| POST   | `/api/v1/auth/resend-otp`         | ❌   | Kirim ulang OTP                       |
+| POST   | `/api/v1/auth/forgot-password`    | ❌   | Request link reset password via email |
+| GET    | `/api/v1/auth/verify-reset-token` | ❌   | Validasi token reset (untuk frontend) |
+| POST   | `/api/v1/auth/reset-password`     | ❌   | Set password baru                     |
+
+### Protected
+
+| Method | Endpoint            | Auth | Keterangan           |
+|--------|---------------------|------|----------------------|
+| GET    | `/api/v1/profile`   | ✅   | Lihat profil sendiri |
+
+---
+
+## 🔐 Forgot Password Flow
+
 ```
-http://localhost:8080
+1. POST /auth/forgot-password     { "email": "user@example.com" }
+      → Server kirim email dengan link: APP_URL/reset-password?token=<token>
+      → Token berlaku 15 menit, sekali pakai
+
+2. GET /auth/verify-reset-token?token=<token>
+      → Frontend panggil ini untuk validasi token sebelum tampilkan form
+
+3. POST /auth/reset-password      { "token": "...", "new_password": "...", "confirm_password": "..." }
+      → Password diupdate, token di-invalidate
 ```
 
 ---
 
-## 🔐 API Endpoints
+## 🧪 Contoh Request
 
 ### Register
-POST /api/register
+```json
+POST /api/v1/auth/register
+{
+  "name": "Budi Santoso",
+  "email": "budi@example.com",
+  "password": "budi1234",
+  "role": "student"
+}
+```
 
 ### Login
-POST /api/login
+```json
+POST /api/v1/auth/login
+{
+  "email": "budi@example.com",
+  "password": "budi1234"
+}
+```
 
----
+### Forgot Password
+```json
+POST /api/v1/auth/forgot-password
+{ "email": "budi@example.com" }
+```
 
-## 🧠 Features
-
-- JWT Authentication
-- Role-based login validation
-- Password hashing (bcrypt)
-- Clean architecture
-
----
-
-## 🔒 Security
-
-- Hashed password (bcrypt)
-- Token expiration
-- Protected routes with middleware
-
----
-
-## 📄 License
-
-MIT License
+### Reset Password
+```json
+POST /api/v1/auth/reset-password
+{
+  "token": "abc123...",
+  "new_password": "newpass99",
+  "confirm_password": "newpass99"
+}
+```
