@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -296,6 +297,13 @@ func MentorGetSchedule(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"schedule": sessions, "total": len(sessions)})
 }
 
+// MentorUpdateSession memperbarui data sesi: topik, catatan, bintang, status, jadwal, dan meet link.
+//
+// Jika field scheduled_at dikirim (reschedule), sistem akan:
+//  1. Menolak jika sesi sudah completed/cancelled
+//  2. Menolak jika waktu baru sudah lewat
+//  3. Menolak jika waktu baru bertabrakan dengan sesi lain milik mentor yang sama
+//     (sesi dirinya sendiri dikecualikan agar reschedule ke waktu yang sama tetap valid)
 func MentorUpdateSession(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 	sessionIDStr := c.Param("session_id")
@@ -306,10 +314,12 @@ func MentorUpdateSession(c *gin.Context) {
 	}
 
 	var input struct {
-		Topic  string `json:"topic"`
-		Notes  string `json:"notes"`
-		Stars  int    `json:"stars"`
-		Status string `json:"status"`
+		Topic       string `json:"topic"`
+		Notes       string `json:"notes"`
+		Stars       int    `json:"stars"`
+		Status      string `json:"status"`
+		MeetLink    string `json:"meet_link"`
+		ScheduledAt string `json:"scheduled_at"` // RFC3339, opsional — hanya untuk reschedule
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.BadRequest(c, "Format request tidak valid")
@@ -317,7 +327,10 @@ func MentorUpdateSession(c *gin.Context) {
 	}
 
 	var mentor models.MentorProfile
-	config.DB.Where("user_id = ?", userID).First(&mentor)
+	if err := config.DB.Where("user_id = ?", userID).First(&mentor).Error; err != nil {
+		utils.NotFound(c, "Profil mentor tidak ditemukan")
+		return
+	}
 
 	var session models.Session
 	if err := config.DB.
@@ -327,6 +340,57 @@ func MentorUpdateSession(c *gin.Context) {
 		return
 	}
 
+	// ── Reschedule: validasi dan cek konflik ──────────────────────────────────
+	if input.ScheduledAt != "" {
+		if session.Status == models.SessionCompleted || session.Status == models.SessionCancelled {
+			utils.BadRequest(c, "Sesi yang sudah selesai atau dibatalkan tidak dapat dijadwalkan ulang")
+			return
+		}
+
+		// Terima RFC3339 dengan atau tanpa timezone suffix
+		newTime, parseErr := time.Parse(time.RFC3339, input.ScheduledAt)
+		if parseErr != nil {
+			newTime, parseErr = time.Parse("2006-01-02T15:04:05", input.ScheduledAt)
+			if parseErr != nil {
+				utils.BadRequest(c, "Format scheduled_at tidak valid. Gunakan RFC3339, contoh: 2025-01-20T09:00:00Z")
+				return
+			}
+		}
+
+		// Tolak reschedule ke masa lalu (toleransi 5 menit untuk latency jaringan)
+		if newTime.Before(time.Now().Add(-5 * time.Minute)) {
+			utils.BadRequest(c, "Tidak dapat menjadwalkan sesi di waktu yang sudah lewat")
+			return
+		}
+
+		// Cek konflik dengan sesi lain milik mentor ini.
+		// session.ID dikecualikan agar sesi ini tidak konflik dengan dirinya sendiri.
+		ok, conflict, checkErr := CheckMentorConflict(mentor.ID, newTime, session.Duration, session.ID)
+		if checkErr != nil {
+			utils.InternalError(c, "Gagal memvalidasi jadwal, coba lagi")
+			return
+		}
+		if !ok {
+			c.JSON(http.StatusConflict, gin.H{
+				"message": fmt.Sprintf(
+					"Jadwal bertabrakan dengan sesi lain yang berlangsung sampai %s",
+					conflict.Slot.End.Format("15:04"),
+				),
+				"conflict": gin.H{
+					"session_id": conflict.SessionID,
+					"ends_at":    conflict.Slot.End.Format(time.RFC3339),
+				},
+			})
+			return
+		}
+
+		session.ScheduledAt = newTime
+	}
+
+	// ── Update field konten (semua opsional) ──────────────────────────────────
+	if input.MeetLink != "" {
+		session.MeetLink = input.MeetLink
+	}
 	if input.Topic != "" {
 		session.Topic = input.Topic
 	}
@@ -336,6 +400,8 @@ func MentorUpdateSession(c *gin.Context) {
 	if input.Stars >= 1 && input.Stars <= 5 {
 		session.Stars = input.Stars
 	}
+
+	// ── Perubahan status ──────────────────────────────────────────────────────
 	if input.Status != "" {
 		status := models.SessionStatus(input.Status)
 		validStatuses := map[models.SessionStatus]bool{
@@ -345,23 +411,39 @@ func MentorUpdateSession(c *gin.Context) {
 			models.SessionCancelled: true,
 		}
 		if !validStatuses[status] {
-			utils.BadRequest(c, "Status tidak valid")
+			utils.BadRequest(c, "Status tidak valid. Pilihan: upcoming, ongoing, completed, cancelled")
 			return
 		}
+		// Lindungi dari rollback status yang tidak logis
+		if (session.Status == models.SessionCompleted || session.Status == models.SessionCancelled) &&
+			(status == models.SessionUpcoming || status == models.SessionOngoing) {
+			utils.BadRequest(c, "Tidak dapat mengubah status sesi yang sudah selesai atau dibatalkan")
+			return
+		}
+
 		session.Status = status
+
+		if status == models.SessionOngoing {
+			now := time.Now()
+			session.StartedAt = &now
+		}
 		if status == models.SessionCompleted {
 			now := time.Now()
 			session.CompletedAt = &now
-			// Update counter di Order
+			// Update counter secara atomic — guard agar tidak bisa negatif
 			config.DB.Model(&models.Order{}).
-				Where("id = ?", session.OrderID).
+				Where("id = ? AND completed_sessions < total_sessions", session.OrderID).
 				Updates(map[string]interface{}{
-					"completed_sessions":  config.DB.Raw("completed_sessions + 1"),
-					"remaining_sessions":  config.DB.Raw("remaining_sessions - 1"),
+					"completed_sessions": config.DB.Raw("completed_sessions + 1"),
+					"remaining_sessions": config.DB.Raw("remaining_sessions - 1"),
 				})
 		}
 	}
-	config.DB.Save(&session)
+
+	if err := config.DB.Save(&session).Error; err != nil {
+		utils.InternalError(c, "Gagal menyimpan perubahan sesi")
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Sesi berhasil diperbarui", "session": session})
 }

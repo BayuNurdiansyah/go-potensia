@@ -15,7 +15,7 @@ func SetupRouter() *gin.Engine {
 		c.JSON(200, gin.H{"status": "ok", "service": "go-potensia"})
 	})
 
-	api := r.Group("/api")
+	api := r.Group("/api/v1")
 
 	// ── AUTH (public) ─────────────────────────────────────────────────────────
 	auth := api.Group("/auth")
@@ -32,6 +32,7 @@ func SetupRouter() *gin.Engine {
 	// ── PUBLIC: search & mentor detail ───────────────────────────────────────
 	api.GET("/mentors", controllers.SearchMentors)
 	api.GET("/mentors/:mentor_id", controllers.GetMentorPublicProfile)
+	api.GET("/mentors/:mentor_id/availability", controllers.GetMentorAvailability)
 
 	// ── PROTECTED (all roles) ─────────────────────────────────────────────────
 	protected := api.Group("/")
