@@ -24,9 +24,10 @@ type MentorProfile struct {
 	BankAccountName string `json:"bank_account_name" gorm:"type:varchar(100)"`
 
 	// Statistik (di-cache agar tidak query ulang tiap request)
-	TotalStudents int   `json:"total_students" gorm:"default:0"`
-	TotalSessions int   `json:"total_sessions" gorm:"default:0"`
-	TotalEarnings int64 `json:"total_earnings" gorm:"default:0"`
+	TotalStudents     int   `json:"total_students" gorm:"default:0"`
+	TotalSessions     int   `json:"total_sessions" gorm:"default:0"`
+	CompletedSessions int   `json:"completed_sessions" gorm:"default:0"`
+	TotalEarnings     int64 `json:"total_earnings" gorm:"default:0"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

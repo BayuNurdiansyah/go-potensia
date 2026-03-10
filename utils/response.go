@@ -1,10 +1,41 @@
 package utils
 
 import (
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
+
+// OK sends a 200 OK response with data directly (no wrapper).
+func OK(c *gin.Context, data interface{}) {
+	c.JSON(http.StatusOK, data)
+}
+
+// PaginatedOK sends paginated response.
+func PaginatedOK(c *gin.Context, data interface{}, total int64, page, limit int) {
+	c.JSON(http.StatusOK, gin.H{
+		"data":        data,
+		"total":       total,
+		"page":        page,
+		"limit":       limit,
+		"total_pages": int(math.Ceil(float64(total) / float64(limit))),
+	})
+}
+
+// Paginate extracts page & limit from query params (defaults: page=1, limit=20).
+func Paginate(c *gin.Context) (page int, limit int) {
+	page, _ = strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ = strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	return
+}
 
 // Success sends a 200 OK response.
 func Success(c *gin.Context, data gin.H) {

@@ -6,6 +6,7 @@ import (
 
 	"go-potensia/config"
 	"go-potensia/routes"
+	"go-potensia/seeders"
 
 	"github.com/joho/godotenv"
 )
@@ -17,15 +18,23 @@ func main() {
 	// Connect DB
 	config.ConnectDB()
 
-	// Setup router
+	// Run seeder jika ada flag --seed atau env SEED=true
+	if len(os.Args) > 1 && os.Args[1] == "--seed" || os.Getenv("SEED") == "true" {
+		seeders.SeedAll(config.DB)
+		if len(os.Args) > 1 && os.Args[1] == "--seed" {
+			log.Println("Seeding done. Exiting.")
+			return
+		}
+	}
+
 	r := routes.SetupRouter()
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "10000"
+		port = "8080"
 	}
 
-	log.Printf("🚀 Server running on port %s", port)
+	log.Printf("🚀 Potensia backend running on port %s", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

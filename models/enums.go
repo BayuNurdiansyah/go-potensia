@@ -7,6 +7,8 @@ type OrderStatus string
 type PaymentStatus string
 type PaymentMethod string
 type Gender string
+type WithdrawalStatus string
+type WithdrawalDay string
 
 const (
 	RoleParent Role = "parent"
@@ -36,4 +38,17 @@ const (
 
 	GenderMale   Gender = "Laki-laki"
 	GenderFemale Gender = "Perempuan"
+
+	// Withdrawal / pencairan
+	WithdrawalPending   WithdrawalStatus = "pending"
+	WithdrawalProcessed WithdrawalStatus = "processed"
+	WithdrawalFailed    WithdrawalStatus = "failed"
+
+	WithdrawalDaySenin  WithdrawalDay = "Senin"
+	WithdrawalDaySelasa WithdrawalDay = "Selasa"
+	WithdrawalDayRabu   WithdrawalDay = "Rabu"
+	WithdrawalDayKamis  WithdrawalDay = "Kamis"
+	WithdrawalDayJumat  WithdrawalDay = "Jumat"
+	WithdrawalDaySabtu  WithdrawalDay = "Sabtu"
+	WithdrawalDayMinggu WithdrawalDay = "Minggu"
 )

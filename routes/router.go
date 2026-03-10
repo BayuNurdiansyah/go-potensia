@@ -60,9 +60,20 @@ func SetupRouter() *gin.Engine {
 		mentor.GET("/profile", controllers.MentorGetProfile)
 		mentor.PUT("/profile", controllers.MentorUpdateProfile)
 
+		// Bank account & pencairan
+		mentor.GET("/bank", controllers.MentorGetBankAccount)
+		mentor.PUT("/bank", controllers.MentorUpsertBankAccount)
+
+		// Earnings / pendapatan
+		mentor.GET("/earnings", controllers.MentorGetEarnings)
+		mentor.GET("/earnings/sessions", controllers.MentorGetEarningsBySession)
+		mentor.GET("/earnings/history", controllers.MentorGetEarningsHistory)
+
 		// Students
 		mentor.GET("/students", controllers.MentorGetStudents)
 		mentor.GET("/students/:order_id", controllers.MentorGetStudentDetail)
+		mentor.GET("/students/:order_id/progress", controllers.MentorGetStudentProgress)
+		mentor.PUT("/students/:order_id/progress", controllers.MentorUpdateStudentProgress)
 
 		// Schedule & sessions
 		mentor.GET("/schedule", controllers.MentorGetSchedule)
@@ -96,12 +107,19 @@ func SetupRouter() *gin.Engine {
 		parent.PUT("/children/:child_id", controllers.ParentUpdateChild)
 		parent.DELETE("/children/:child_id", controllers.ParentDeleteChild)
 
-		// Progress anak
+		// Progress anak (per child, semua order)
 		parent.GET("/children/:child_id/progress", controllers.ParentGetChildProgress)
+
+		// Pantau Belajar — semua anak + kursus aktif (progress-schedule screen)
+		parent.GET("/progress-schedule", controllers.ParentGetProgressSchedule)
 
 		// Orders
 		parent.GET("/orders", controllers.ParentGetOrders)
 		parent.POST("/orders", controllers.ParentCreateOrder)
+
+		// Order detail: jadwal sesi + progress skill
+		parent.GET("/orders/:order_id/schedule", controllers.ParentGetOrderSchedule)
+		parent.GET("/orders/:order_id/progress", controllers.ParentGetOrderProgress)
 
 		// Payments / Invoice
 		parent.GET("/payments", controllers.ParentGetPayments)
