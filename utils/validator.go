@@ -20,6 +20,10 @@ func IsValidPassword(password string) bool {
 	return hasLetter && hasDigit
 }
 
+func IsSamePassword(pw1, pw2 string) bool {
+	return pw1 == pw2
+}
+
 func IsValidPhone(phone string) bool {
 	clean := regexp.MustCompile(`\D`).ReplaceAllString(phone, "")
 	return len(clean) >= 10 && len(clean) <= 15

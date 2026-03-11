@@ -23,6 +23,7 @@ func Register(c *gin.Context) {
 		Email    string      `json:"email"`
 		Phone    string      `json:"phone"`
 		Password string      `json:"password"`
+		PasswordConfirmed string      `json:"password_confirm"`
 		Role     models.Role `json:"role"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -44,6 +45,10 @@ func Register(c *gin.Context) {
 	}
 	if !utils.IsValidPassword(input.Password) {
 		utils.BadRequest(c, "Password minimal 8 karakter dan harus mengandung huruf serta angka")
+		return
+	}
+	if !utils.IsSamePassword(input.Password, input.PasswordConfirmed) {
+		utils.BadRequest(c, "Password dan konfirmasi password tidak cocok")
 		return
 	}
 	if input.Phone != "" && !utils.IsValidPhone(input.Phone) {
