@@ -15,7 +15,7 @@ func SetupRouter() *gin.Engine {
 		c.JSON(200, gin.H{"status": "ok", "service": "go-potensia"})
 	})
 
-	api := r.Group("/api/v1")
+	api := r.Group("/api")
 
 	// ── AUTH (public) ─────────────────────────────────────────────────────────
 	auth := api.Group("/auth")
