@@ -47,6 +47,10 @@ func SetupRouter() *gin.Engine {
 		protected.PUT("/notifications/:notif_id/read", controllers.MarkNotificationRead)
 		protected.GET("/notifications/preferences", controllers.GetNotificationPreferences)
 		protected.PUT("/notifications/preferences", controllers.UpdateNotificationPreferences)
+
+		// ── Avatar upload (mentor & parent) ──────────────────────────────────
+		protected.POST("/upload/avatar", controllers.UploadAvatar)
+		protected.DELETE("/upload/avatar", controllers.DeleteAvatar)
 	}
 
 	// ── MENTOR routes ─────────────────────────────────────────────────────────
