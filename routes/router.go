@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"go-potensia/controllers"
 	"go-potensia/middlewares"
 	"go-potensia/models"
@@ -11,8 +13,17 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// ── Load HTML templates ───────────────────────────────────────────────────
+	r.LoadHTMLGlob("templates/*")
+
+	// ── Health ────────────────────────────────────────────────────────────────
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "service": "go-potensia"})
+	})
+
+	// ── Reset password page (served as HTML — diklik dari email) ─────────────
+	r.GET("/reset-password", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "reset_password.html", nil)
 	})
 
 	api := r.Group("/api")

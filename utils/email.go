@@ -23,17 +23,16 @@ func sendEmail(toEmail, toName, subject, html string) error {
 	if apiKey == "" {
 		return fmt.Errorf("BREVO_API_KEY not set")
 	}
+
 	senderEmail := os.Getenv("BREVO_SENDER_EMAIL")
-	senderName := os.Getenv("BREVO_SENDER_NAME")
+	senderName  := os.Getenv("BREVO_SENDER_NAME")
 	if senderEmail == "" {
 		senderEmail = os.Getenv("SMTP_EMAIL")
 	}
-	appName := os.Getenv("APP_NAME")
-	if appName == "" {
-		appName = "Potensia"
-	}
+
+	name := appName()
 	if senderName == "" {
-		senderName = appName
+		senderName = name
 	}
 
 	payload := brevoPayload{
@@ -71,18 +70,33 @@ func appName() string {
 	return "Potensia"
 }
 
+// appBaseURL returns the base URL of the backend server itself.
+// Link reset password diarahkan ke halaman HTML yang di-serve Go server.
+// Di .env set: APP_URL=https://go-potensia.onrender.com
+// Di local:    APP_URL=http://localhost:8080
+func appBaseURL() string {
+	if u := os.Getenv("APP_URL"); u != "" {
+		return u
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	return "http://localhost:" + port
+}
+
 func SendOTPEmail(toEmail, toName, otp string) error {
 	app := appName()
 	html := fmt.Sprintf(`<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0">
 <table width="100%%" cellpadding="0" cellspacing="0" style="padding:40px 0">
 <tr><td align="center">
 <table width="520" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-<tr><td style="background:#4F46E5;padding:28px 40px"><h1 style="color:#fff;margin:0;font-size:22px">%s</h1></td></tr>
+<tr><td style="background:#1B4FD8;padding:28px 40px"><h1 style="color:#fff;margin:0;font-size:22px">%s</h1></td></tr>
 <tr><td style="padding:32px 40px">
 <h2 style="color:#1a1a1a;margin:0 0 12px">Verifikasi Akun</h2>
 <p style="color:#555;line-height:1.6;margin:0 0 24px">Halo <strong>%s</strong>, gunakan kode berikut untuk verifikasi akun kamu:</p>
-<div style="background:#F5F3FF;border:2px dashed #4F46E5;border-radius:8px;padding:20px;text-align:center;margin-bottom:24px">
-<span style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#4F46E5">%s</span>
+<div style="background:#EFF6FF;border:2px dashed #1B4FD8;border-radius:8px;padding:20px;text-align:center;margin-bottom:24px">
+<span style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#1B4FD8">%s</span>
 </div>
 <p style="color:#888;font-size:13px;margin:0">Kode berlaku <strong>5 menit</strong>. Jangan bagikan ke siapapun.</p>
 </td></tr>
@@ -95,27 +109,26 @@ func SendOTPEmail(toEmail, toName, otp string) error {
 }
 
 func SendForgotPasswordEmail(toEmail, toName, token string) error {
-	app := appName()
-	appURL := os.Getenv("APP_URL") + ":" + os.Getenv("PORT")
-	if appURL == "" {
-		appURL = "http://localhost:3000"
-	}
-	link := fmt.Sprintf("%s/reset-password?token=%s", appURL, token)
+	app  := appName()
+	base := appBaseURL()
+
+	// Link mengarah ke halaman HTML di Go server itu sendiri
+	link := fmt.Sprintf("%s/reset-password?token=%s", base, token)
 
 	html := fmt.Sprintf(`<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0">
 <table width="100%%" cellpadding="0" cellspacing="0" style="padding:40px 0">
 <tr><td align="center">
 <table width="520" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-<tr><td style="background:#4F46E5;padding:28px 40px"><h1 style="color:#fff;margin:0;font-size:22px">%s</h1></td></tr>
+<tr><td style="background:#1B4FD8;padding:28px 40px"><h1 style="color:#fff;margin:0;font-size:22px">%s</h1></td></tr>
 <tr><td style="padding:32px 40px">
 <h2 style="color:#1a1a1a;margin:0 0 12px">Reset Password</h2>
-<p style="color:#555;line-height:1.6;margin:0 0 24px">Halo <strong>%s</strong>, klik tombol berikut untuk reset password:</p>
+<p style="color:#555;line-height:1.6;margin:0 0 24px">Halo <strong>%s</strong>, klik tombol berikut untuk membuat password baru:</p>
 <div style="text-align:center;margin-bottom:28px">
-<a href="%s" style="display:inline-block;background:#4F46E5;color:#fff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:16px;font-weight:bold">Reset Password</a>
+<a href="%s" style="display:inline-block;background:#1B4FD8;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:16px;font-weight:bold">Buat Password Baru</a>
 </div>
-<p style="color:#888;font-size:13px;margin:0 0 8px">Atau copy link ini:</p>
-<p style="color:#4F46E5;font-size:12px;word-break:break-all;margin:0 0 24px">%s</p>
-<p style="color:#888;font-size:13px;margin:0">Link berlaku <strong>15 menit</strong>, sekali pakai. Jika tidak request reset, abaikan email ini.</p>
+<p style="color:#888;font-size:13px;margin:0 0 8px">Atau copy link ini ke browser:</p>
+<p style="color:#1B4FD8;font-size:12px;word-break:break-all;margin:0 0 24px">%s</p>
+<p style="color:#888;font-size:13px;margin:0">Link berlaku <strong>15 menit</strong> dan hanya bisa dipakai sekali.<br/>Abaikan email ini jika kamu tidak meminta reset password.</p>
 </td></tr>
 <tr><td style="background:#f9f9f9;padding:16px 40px;text-align:center">
 <p style="color:#aaa;font-size:12px;margin:0">Email otomatis dari %s.</p>
