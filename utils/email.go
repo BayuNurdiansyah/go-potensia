@@ -96,7 +96,7 @@ func SendOTPEmail(toEmail, toName, otp string) error {
 
 func SendForgotPasswordEmail(toEmail, toName, token string) error {
 	app := appName()
-	appURL := os.Getenv("APP_URL")
+	appURL := os.Getenv("APP_URL") + os.Getenv("PORT")
 	if appURL == "" {
 		appURL = "http://localhost:3000"
 	}
