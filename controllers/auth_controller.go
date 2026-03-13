@@ -23,7 +23,6 @@ func Register(c *gin.Context) {
 		Email    string      `json:"email"`
 		Phone    string      `json:"phone"`
 		Password string      `json:"password"`
-		PasswordConfirmed string      `json:"password_confirm"`
 		Role     models.Role `json:"role"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -45,10 +44,6 @@ func Register(c *gin.Context) {
 	}
 	if !utils.IsValidPassword(input.Password) {
 		utils.BadRequest(c, "Password minimal 8 karakter dan harus mengandung huruf serta angka")
-		return
-	}
-	if !utils.IsSamePassword(input.Password, input.PasswordConfirmed) {
-		utils.BadRequest(c, "Password dan konfirmasi password tidak cocok")
 		return
 	}
 	if input.Phone != "" && !utils.IsValidPhone(input.Phone) {
@@ -429,6 +424,12 @@ func ResetPassword(c *gin.Context) {
 		return
 	}
 
+	// Cek apakah password baru sama dengan password lama
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.NewPassword)); err == nil {
+		utils.BadRequest(c, "Kata sandi baru tidak boleh sama dengan kata sandi sebelumnya")
+		return
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		utils.InternalError(c, "Gagal memproses password")
@@ -441,7 +442,7 @@ func ResetPassword(c *gin.Context) {
 	user.ResetTokenUsed = true
 	config.DB.Save(&user)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Password berhasil direset. Silakan login dengan password baru."})
+	c.JSON(http.StatusOK, gin.H{"message": "Kata sandi berhasil diubah. Silakan login dengan kata sandi baru."})
 }
 
 // ─── CHANGE PASSWORD (authenticated) ────────────────────────────────────────
