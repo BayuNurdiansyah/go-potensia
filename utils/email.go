@@ -121,19 +121,16 @@ func SendForgotPasswordEmail(toEmail, toName, token string) error {
 <table width="520" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
 <tr><td style="background:#1B4FD8;padding:28px 40px"><h1 style="color:#fff;margin:0;font-size:22px">%s</h1></td></tr>
 <tr><td style="padding:32px 40px">
-<h2 style="color:#1a1a1a;margin:0 0 12px">Reset Password</h2>
-<p style="color:#555;line-height:1.6;margin:0 0 24px">Halo <strong>%s</strong>, klik tombol berikut untuk membuat password baru:</p>
+<p style="color:#555;line-height:1.6;margin:0 0 24px">Halo <strong>%s</strong>,</p>
+<p style="color:#555;line-height:1.6;margin:0 0 28px">Kami menerima permintaan untuk mengatur ulang kata sandi pada akun Anda. Silakan klik tombol di bawah ini untuk membuat kata sandi baru.</p>
 <div style="text-align:center;margin-bottom:28px">
-<a href="%s" style="display:inline-block;background:#1B4FD8;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:16px;font-weight:bold">Buat Password Baru</a>
+<a href="%s" style="display:inline-block;background:#1B4FD8;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:16px;font-weight:bold">Buat Kata Sandi Baru</a>
 </div>
-<p style="color:#888;font-size:13px;margin:0 0 8px">Atau copy link ini ke browser:</p>
-<p style="color:#1B4FD8;font-size:12px;word-break:break-all;margin:0 0 24px">%s</p>
-<p style="color:#888;font-size:13px;margin:0">Link berlaku <strong>15 menit</strong> dan hanya bisa dipakai sekali.<br/>Abaikan email ini jika kamu tidak meminta reset password.</p>
+<p style="color:#888;font-size:13px;line-height:1.7;margin:0 0 24px">Tombol di atas <strong>hanya berlaku selama 15 menit</strong> dan <strong>hanya dapat digunakan satu kali</strong> demi menjaga keamanan akun Anda.</p>
+<p style="color:#888;font-size:13px;line-height:1.7;margin:0 0 24px">Jika Anda tidak merasa melakukan permintaan tersebut, silakan abaikan email ini.</p>
+<p style="color:#555;line-height:1.6;margin:0">Terima kasih.<br/>Tim %s</p>
 </td></tr>
-<tr><td style="background:#f9f9f9;padding:16px 40px;text-align:center">
-<p style="color:#aaa;font-size:12px;margin:0">Email otomatis dari %s.</p>
-</td></tr>
-</table></td></tr></table></body></html>`, app, toName, link, link, app)
+</table></td></tr></table></body></html>`, app, toName, link, app)
 
-	return sendEmail(toEmail, toName, fmt.Sprintf("Reset Password %s", app), html)
+	return sendEmail(toEmail, toName, fmt.Sprintf("Atur Ulang Kata Sandi %s", app), html)
 }
